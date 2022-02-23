@@ -175,12 +175,15 @@ Post_Data = {"params":
               "tjsj": time.strftime("%Y-%m-%d %H:%M", time.localtime(time.time())),
               "fxsj": "",
               "yjzt": 0}}
+
+if near_data.get("TBRQ") == time.strftime("%Y-%m-%d", time.localtime(time.time())):
+    Post_Data["params"]["id"] = near_data.get('ID')
+    print("今天已经打过卡了，正在更新打卡记录")
+
 reply = session.post(url, data=json.dumps(Post_Data), headers=Headers)
 if reply.text.find(r'"success":true') != -1:
     print("打卡成功！时间：", time.strftime(
         "%Y-%m-%d %H:%M", time.localtime(time.time())))
-elif reply.text.find(r'rollback-only') != -1:
-    print("今天已经打过卡了，请勿重复打卡")
 else:
     print("打卡失败")
     print(reply.text)
