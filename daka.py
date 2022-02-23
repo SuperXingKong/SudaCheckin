@@ -2,7 +2,6 @@ import json
 import requests
 import time
 import re
-import random
 import os
 
 session = requests.session()
@@ -139,10 +138,8 @@ Post_Data = {"params":
               "ljqk": "",
               # 填报日期
               "tbrq": time.strftime("%Y-%m-%d", time.localtime(time.time())),
-              # 腋测法体温正常值是36-37℃，口测法体温正常值是36.3-37.2℃，而肛测法体温的正常值是36.5-37.7℃
-              # 这里取腋测法的保守值36.2-36.8℃
-              "swtw": str(round(random.uniform(36.2, 36.8), 1)),
-              "xwtw": str(round(random.uniform(36.2, 36.8), 1)),
+              "swtw": "",
+              "xwtw": "",
               "jkzk": "[\""+config.get("jkzk", 1)+"\"]",
               "xrywz": config.get("xrywz", 5),
               # jtdzshen=具体地址省？省不是后鼻音吗...这里要吐槽下命名变量的程序员的语文水平
