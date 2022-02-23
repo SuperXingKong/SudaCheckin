@@ -3,19 +3,52 @@ import requests
 import time
 import re
 import random
+import os
 
 session = requests.session()
 
 
-# 请根据自己的情况自行修改以下配置文件
-config = {
-    # (不会有人真的不填1吧？)"正常":"1", "发热", "2", "咳嗽":"3", "头疼":"4", "乏力":"5", "胸闷":"6", "厌食":"11", "腹泻":"8", "呼吸困难":"7", "新冠肺炎疑似病例":"10", "新冠肺炎确诊病例":"9", "新冠肺炎无症状感染者":"12"
-    "个人健康状况": "1",
-    "现人员位置": "5",  # "在校 ":"1", "在苏州":"2", "江苏省其他地区":"5", "在境外、在中高风险地区":"37", "在中高风险地区所在城市":"39", "在其他地区":"38"
-    "地址": {"省": "江苏省", "市": "", "区": "", "具体地址": ""},  # 按照每日打卡上具体地址一栏填写
-    "学号": "",  # 登陆用
-    "密码": ""
-}
+def is_set_account():
+    if os.path.exists("daka.json"):
+        return True
+    else:
+        return False
+
+
+def set_account():
+
+    print("第一次运行程序，请填写下面的打卡必要信息")
+    jkzk = input(r'请输入个人健康状况，仅数字("正常":"1", "发热", "2", "咳嗽":"3", "头疼":"4", "乏力":"5", "胸闷":"6", "厌食":"11", "腹泻":"8", "呼吸困难":"7", "新冠肺炎疑似病例":"10", "新冠肺炎确诊病例":"9", "新冠肺炎无症状感染者":"12"): ')
+    xrywz = input(
+        r'请输入现人员位置，仅数字("在校 ":"1", "在苏州":"2", "江苏省其他地区":"5", "在境外、在中高风险地区":"37", "在中高风险地区所在城市":"39", "在其他地区":"38"): ')
+    username = input("请输入学号: ")
+    pwd = input("请输入密码: ")
+
+    print("--------以下内容为填报上传的地址信息，按打卡网站填写即可--------")
+    sheng = input("请输入所在省: ")
+    shi = input("请输入所在市: ")
+    qu = input("请输入所在区: ")
+    jtdz = input("请输入具体地址: ")
+    account = {"jkzk": jkzk, "xrywz": xrywz,
+               "username": username, "password": pwd, "dz": {"sheng": sheng, "shi": shi, "qu": qu, "jtdz": jtdz}}
+    account_file = open("daka.json", "w")
+    account_file.write(json.dumps(account))
+    account_file.close()
+    print("设置成功！\n账号:{:}\n密码:{:}".format(
+        username, pwd))
+
+
+def read_account():
+    account_file = open("daka.json", "r")
+    account_data = json.load(account_file)
+    account_file.close()
+    return account_data
+
+
+if not is_set_account():
+    set_account()
+
+config = read_account()
 
 ###### 登录 ######
 
@@ -46,8 +79,8 @@ pid = re.findall(r'value="CAS_.+"', response2.text)[0][7:-1]
 lt = re.findall(r'value="LT-.+"', response2.text)[0][7:-1]
 execution = re.findall(r'"execution" value="(.+)"', response2.text)[0]
 data_packet = {
-    "username": config.get('学号'),
-    "password": config.get('密码'),
+    "username": config.get('username'),
+    "password": config.get('password'),
     "pid": pid,
     "source": "cas",
     "execution": execution,
@@ -64,17 +97,17 @@ else:
 
 ###### 打卡 ######
 
-urlBase="http://dk.suda.edu.cn/default/work/suda/jkxxtb/com.sudytech.work.suda.jkxxtb.jkxxcj.queryNear.biz.ext"
-HeadersBase={"Host": "dk.suda.edu.cn",
-"Connection": "keep-alive",
-"Cache-Control": "max-age=0",
-"Upgrade-Insecure-Requests": "1",
-"User-Agent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.80 Mobile Safari/537.36 Edg/98.0.1108.43",
-"Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-"Accept-Encoding": "gzip, deflate",
-"Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6"}
-responseBase = session.get(urlBase,headers=HeadersBase)
-near_data=json.loads(responseBase.text).get('list')[0]
+urlBase = "http://dk.suda.edu.cn/default/work/suda/jkxxtb/com.sudytech.work.suda.jkxxtb.jkxxcj.queryNear.biz.ext"
+HeadersBase = {"Host": "dk.suda.edu.cn",
+               "Connection": "keep-alive",
+               "Cache-Control": "max-age=0",
+               "Upgrade-Insecure-Requests": "1",
+               "User-Agent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.80 Mobile Safari/537.36 Edg/98.0.1108.43",
+               "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+               "Accept-Encoding": "gzip, deflate",
+               "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6"}
+responseBase = session.get(urlBase, headers=HeadersBase)
+near_data = json.loads(responseBase.text).get('list')[0]
 
 url = "http://dk.suda.edu.cn/default/work/suda/jkxxtb/com.sudytech.work.suda.jkxxtb.jkxxcj.saveOrUpdate.biz.ext"
 Headers = {"Host": "dk.suda.edu.cn",
@@ -104,17 +137,19 @@ Post_Data = {"params":
               "hcrq": "",
               "hccc": "",
               "ljqk": "",
-              "tbrq": time.strftime("%Y-%m-%d", time.localtime(time.time())),  # 填报日期
+              # 填报日期
+              "tbrq": time.strftime("%Y-%m-%d", time.localtime(time.time())),
               # 腋测法体温正常值是36-37℃，口测法体温正常值是36.3-37.2℃，而肛测法体温的正常值是36.5-37.7℃
               # 这里取腋测法的保守值36.2-36.8℃
               "swtw": str(round(random.uniform(36.2, 36.8), 1)),
               "xwtw": str(round(random.uniform(36.2, 36.8), 1)),
-              "jkzk": "[\""+config.get("个人健康状况", 1)+"\"]",
-              "xrywz": config.get("现人员位置", 5),
-              "jtdzshen": config["地址"].get('省'),  # jtdzshen=具体地址省？省不是后鼻音吗...这里要吐槽下命名变量的程序员的语文水平
-              "jtdzshi": config["地址"].get('市'),
-              "jtdzqu": config["地址"].get('区'),
-              "jtdz": config["地址"].get('具体地址'),
+              "jkzk": "[\""+config.get("jkzk", 1)+"\"]",
+              "xrywz": config.get("xrywz", 5),
+              # jtdzshen=具体地址省？省不是后鼻音吗...这里要吐槽下命名变量的程序员的语文水平
+              "jtdzshen": config["dz"].get('sheng'),
+              "jtdzshi": config["dz"].get('shi'),
+              "jtdzqu": config["dz"].get('qu'),
+              "jtdz": config["dz"].get('jtdz'),
               "sfyxglz": "否",  # 是否医学隔离中
               "yxgcts": "",
               "glfs": "",
@@ -136,7 +171,8 @@ Post_Data = {"params":
               "sfyzgfxryjcdd": "",
               "bz": "",
               "_ext": "{}",
-              "tjsj": time.strftime("%Y-%m-%d %H:%M", time.localtime(time.time())),  # 这里填打卡时间，但实测乱填也可以...会按照服务器时间打卡，但是日期必须填当天的
+              # 这里填打卡时间，但实测乱填也可以...会按照服务器时间打卡，但是日期必须填当天的
+              "tjsj": time.strftime("%Y-%m-%d %H:%M", time.localtime(time.time())),
               "fxsj": "",
               "yjzt": 0}}
 reply = session.post(url, data=json.dumps(Post_Data), headers=Headers)
